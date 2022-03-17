@@ -1,0 +1,605 @@
+<html>
+    <head>
+        <title>
+            Tile-Flip Puzzle
+        </title>
+    </head>
+    <style>
+
+        body{
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        #mainMenu{
+            position: absolute;
+            width: 200px;
+            height: 100px;
+            left: 50%;
+            top: 50%;
+            margin-left: -100px;
+            margin-top: -50px;
+            text-align: center;
+        }
+
+        #game{
+            position: absolute;
+            width: 700px;
+            height: 500;
+            left: 50%;
+            top: 50%;
+            margin-left: -350px;
+            margin-top: -250px;
+            display: none;
+        }
+
+        #gamePlayBoard{
+            position: absolute;
+            left: 0px;
+            bottom: 100px;
+            width: 300px;
+            height: 300px;
+            border: 1px solid black;
+        }
+
+        #gameImitateBoard{
+            position: absolute;
+            bottom: 100px;
+            right: 0px;
+            width: 300px;
+            height: 300px;
+            border: 1px solid black;
+        }
+
+        #gamePlayText{
+            position: absolute;
+            left: 0px;
+            top: 40px;
+            width: 300px;
+            height: 30px;
+            text-align: center;
+        }
+
+        #gameImitateText{
+            position: absolute;
+            right: 0px;
+            top: 40px;
+            width: 300px;
+            height: 30px;
+            text-align: center;
+        }
+
+        #levelText{
+            position: absolute;
+            left: 0px;
+            bottom: 0px;
+            width: 100%;
+            height: 75px;
+            text-align: center;
+        }
+
+        #level{
+            position: absolute;
+            top: 50%;
+            width: 50px;
+            height: 50px;
+            left: 50%;
+            margin-left: -25px;
+            margin-top: -25px;
+            text-align: center;
+        }
+
+        #popUpText{
+            position: absolute;
+            top: 50%;
+            width: 800px;
+            height: 400px;
+            left: 50%;
+            margin-left: -400px;
+            margin-top: -200px;
+            text-align: center;
+            font-size: 130;
+            z-index: 10;
+            font-weight: 750;
+            opacity: 0.7;
+            padding-top: 130px;
+            display: none;
+        }
+
+    </style>
+    <body>
+
+        <div id="mainMenu">
+            <button id="play" onclick="startNewGame()" style="width: 100%; background-color: white; height: 50px; border-radius: 10px; font-size: larger;">Play</button><br><br>
+            <small>
+                High Score: <span id="highScore">0</span>
+            </small>
+        </div>
+        <div id="game">
+            <div id="popUpText">
+                MATCH!
+            </div>
+            <div id="levelText">
+                Turns: <span id="turns"></span><br><br>
+                Lives Left: <span id="lives"><span>
+            </div>
+            <div id="gamePlayText">
+                Tap tiles on this board to flip all surrounding tiles.
+            </div>
+            <div id="gameImitateText">
+                Imitate this board in <span id="moves"></spam>.
+            </div>
+            <canvas id="gamePlayBoard" width="300" height="300"></canvas>
+            <canvas id="gameImitateBoard" width="300" height="300"></canvas>
+            <div id="level">
+                <b>
+                    LVL<br>
+                    <span id="levelLabel"></span><br><br>
+                    <button onclick="reset()" style="font-size:10; background-color: white; border-radius: 10px; border: 1px solid black;">reset<br>level</button>
+                </b>
+            </div>
+        </div>
+
+    </body>
+    <script>
+
+        let highScore;
+
+        let size = 4;
+        let level = 1;
+        let lives = 10;
+        let turns = 1;
+        let board = [
+            [true, false, true, false, true, false, true],
+            [false, true, false, true, false, true, false],
+            [true, false, true, false, true, false, true],
+            [false, true, false, true, false, true, false],
+            [true, false, true, false, true, false, true],
+            [false, true, false, true, false, true, false],
+            [true, false, true, false, true, false, true],
+        ]
+
+        let startBoard = [
+            [true, false, true, false, true, false, true],
+            [false, true, false, true, false, true, false],
+            [true, false, true, false, true, false, true],
+            [false, true, false, true, false, true, false],
+            [true, false, true, false, true, false, true],
+            [false, true, false, true, false, true, false],
+            [true, false, true, false, true, false, true],
+        ]
+
+        let boardToImitate = [
+            [true, false, true, false, true, false, true],
+            [false, true, false, true, false, true, false],
+            [true, false, true, false, true, false, true],
+            [false, true, false, true, false, true, false],
+            [true, false, true, false, true, false, true],
+            [false, true, false, true, false, true, false],
+            [true, false, true, false, true, false, true],
+        ]
+
+        let presets = [
+            [
+                [true, true, true, true, true, true, true],
+                [true, true, true, true, true, true, true],
+                [true, true, true, true, true, true, true],
+                [true, true, true, true, true, true, true],
+                [true, true, true, true, true, true, true],
+                [true, true, true, true, true, true, true],
+                [true, true, true, true, true, true, true],
+            ],
+            [
+                [true, false, true, false, true, false, true],
+                [false, true, false, true, false, true, false],
+                [true, false, true, false, true, false, true],
+                [false, true, false, true, false, true, false],
+                [true, false, true, false, true, false, true],
+                [false, true, false, true, false, true, false],
+                [true, false, true, false, true, false, true],
+            ],
+            [
+                [true, true, true, true, true, true, true],
+                [true, false, true, false, true, false, true],
+                [true, true, true, true, true, true, true],
+                [true, false, true, false, true, false, true],
+                [true, true, true, true, true, true, true],
+                [true, false, true, false, true, false, true],
+                [true, true, true, true, true, true, true],
+            ],
+            [
+                [false, true, false, true, false, true, false],
+                [false, true, false, true, false, true, false],
+                [false, true, false, true, false, true, false],
+                [false, true, false, true, false, true, false],
+                [false, true, false, true, false, true, false],
+                [false, true, false, true, false, true, false],
+                [false, true, false, true, false, true, false],
+            ],
+            [
+                [true, true, true, true, true, true, true],
+                [false, false, false, false, false, false, false],
+                [true, true, true, true, true, true, true],
+                [false, false, false, false, false, false, false],
+                [true, true, true, true, true, true, true],
+                [false, false, false, false, false, false, false],
+                [true, true, true, true, true, true, true]
+            ]
+        ]
+
+        let highLightX = -1;
+        let highLightY = -1;
+
+
+        let color1 = "#000000";
+        let color2 = "#ffffff";
+
+        function init(){
+            highScore = parseFloat(localStorage.getItem("highScore")) || 0;
+            document.getElementById("highScore").innerText = highScore;
+        }
+        init()
+
+        function saveHighScore(){
+            if(level - 1 > highScore){
+                highScore = level - 1;
+            }
+            localStorage.setItem("highScore", highScore);
+        }
+
+        function startNewGame(){
+            document.getElementById("mainMenu").style.display = "none";
+            document.getElementById("game").style.display = "block";
+            pickNewBoard();
+            render();
+        }
+
+        function render(){
+            var c = document.getElementById("gamePlayBoard");
+            var ctx = c.getContext("2d");
+            ctx.beginPath();
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, 300, 300);
+            for(let x = 0; x < size; x++){
+                for(let y = 0; y < size; y++){
+                    if(board[x][y]){
+                        ctx.fillStyle = color1;
+                    } else {
+                        ctx.fillStyle = color2;
+                    }
+                    ctx.fillRect(x * (300/size), y * (300/size), (300/size), (300/size));
+                }  
+            }  
+
+            ctx.fillStyle = "#000000";
+            for(let i = 1; i < size; i++){
+                for(let j = 1; j < size; j++){
+                    ctx.fillRect(0, i * (300 / size), 300, 1);
+                    ctx.fillRect(j * (300 / size), 0, 1, 300);
+                }
+            }
+         
+
+            var c2 = document.getElementById("gameImitateBoard");
+            var ctx2 = c2.getContext("2d");
+            ctx.beginPath();
+            ctx2.fillStyle = "#ffffff";
+            ctx2.fillRect(0, 0, 300, 300);
+            for(let x = 0; x < size; x++){
+                for(let y = 0; y < size; y++){
+                    if(boardToImitate[x][y]){
+                        ctx2.fillStyle = color1;
+                    } else {
+                        ctx2.fillStyle = color2;
+                    }
+                    ctx2.fillRect(x * (300/size), y * (300/size), (300/size), (300/size));
+                }  
+            }  
+            ctx2.fillStyle = "#000000";
+            for(let i = 1; i < size; i++){
+                for(let j = 1; j < size; j++){
+                    ctx2.fillRect(0, i * (300 / size), 300, 1);
+                    ctx2.fillRect(j * (300 / size), 0, 1, 300);
+                }
+            }
+
+            if(turns > 1){
+                document.getElementById("moves").innerText = turns + " moves";
+
+            } else {
+                document.getElementById("moves").innerText = "1 move";
+            }
+
+        }
+
+        function renderHighlight(){
+            var c = document.getElementById("gamePlayBoard");
+            var ctx = c.getContext("2d");
+            ctx.beginPath();
+            ctx.fillStyle = "rgba(100, 100, 100, 0.4)";
+            ctx.fillRect(highLightX * (300/size) - (300/size), highLightY * (300/size) - (300/size), 3 * (300/size), 3 * (300/size));
+        }
+
+        function pickNewBoard(){
+            color1 = getRandomColor();
+            color2 = getRandomColor();
+            console.log(color1);
+            console.log(color2);
+            document.getElementById("levelLabel").innerText = level;
+            if(Math.random() > 0.75){
+                for(let x = 0; x < size; x++){
+                    for(let y = 0; y < size; y++){
+                       if(Math.random() > 0.5){
+                            board[x][y] = true;
+                            boardToImitate[x][y] = true;
+                       } else {
+                            board[x][y] = false;
+                            boardToImitate[x][y] = false;
+                       }
+                    }  
+                } 
+            } else {
+                let boardToSelect = Math.floor(Math.random() * presets.length)
+                for(let x = 0; x < size; x++){
+                    for(let y = 0; y < size; y++){
+                        board[x][y] = presets[boardToSelect][x][y];
+                        boardToImitate[x][y] = presets[boardToSelect][x][y];
+                    }  
+                } 
+            }  
+
+            if(level == 1){
+                turns = 1;
+                size = 4;
+            } else if(level == 2){
+                turns = 1;
+                size = 4;
+            } else if(level == 3){
+                turns = 2;
+                size = 4;
+            } else if(level == 4){
+                turns = 2;
+                size = 4;
+            } else if(level == 5){
+                turns = 1;
+                size = 5;
+            } else if(level == 6){
+                turns = 1;
+                size = 5;
+            } else if(level == 7){
+                turns = 2;
+                size = 5;
+            } else if(level == 8){
+                turns = 2;
+                size = 5;
+            } else if(level == 9){
+                turns = 1;
+                size = 6;
+            } else if(level == 10){
+                turns = 1;
+                size = 6;
+            } else if(level == 11){
+                turns = 2;
+                size = 6;
+            } else if(level == 12){
+                turns = 2;
+                size = 6;
+            } else if(level == 13){
+                turns = 3;
+                size = 6;
+            } else if(level == 14){
+                turns = 3;
+                size = 6;
+            } else if(level == 15){
+                turns = 1;
+                size = 7;
+            } else if(level == 16){
+                turns = 2;
+                size = 7;
+            } else if(level == 17){
+                turns = 3;
+                size = 7;
+            } else if(level == 18){
+                turns = 4;
+                size = 7;
+            } else if(level == 19){
+                turns = 5;
+                size = 7;
+            } else if(level == 20){
+                turns = 6;
+                size = 7;
+            }
+
+            for(let i = 0; i < turns; i++){
+                clickTile(Math.floor(Math.random() * size), Math.floor(Math.random() * size), boardToImitate, false)
+            }
+            document.getElementById("turns").innerText = turns;
+            document.getElementById("lives").innerText = lives;
+            document.getElementById("levelLabel").innerText = level;
+
+            if(boardsEqual()){
+                pickNewBoard();
+            }
+            for(let x = 0; x < size; x++){
+                for(let y = 0; y < size; y++){
+                    startBoard[x][y] = board[x][y];
+                }  
+            } 
+        }
+
+        function boardsEqual(){
+            for(let x = 0; x < size; x++){
+                for(let y = 0; y < size; y++){
+                    if(board[x][y] != boardToImitate[x][y]){
+                        return(false);
+                    }
+                }  
+            }  
+            return(true);
+        }
+
+        function clickTile(x, y, thisBoard, isPlayBoard){
+            if(isPlayBoard){
+                //game board
+                if(turns > 1){
+                    turns = turns - 1;
+                    document.getElementById("turns").innerText = turns;
+                } else {
+                    if(lives > 0){
+                        lives = lives - 1;
+                        document.getElementById("lives").innerText = lives;
+                        document.getElementById("popUpText").style.display = "block";
+                        document.getElementById("popUpText").innerText = "INCORRECT";
+                        setTimeout(
+                            function(){
+                                document.getElementById("popUpText").style.display = "none";
+                                reset();
+                            }, 1000
+                        )
+                    } else {
+                        document.getElementById("popUpText").style.display = "block";
+                        document.getElementById("popUpText").innerText = "GAME OVER";   
+                    setTimeout(                     
+                        function(){
+                            lose();
+                            document.getElementById("popUpText").style.display = "none";
+                        }, 1000
+                    )
+                    }
+                }
+              
+                for(let i = -1; i < 2; i++){
+                    for(let j = -1; j < 2; j++){
+                        if((x + i >= 0 && x + i <= size - 1) && (y + j >= 0 && y + j <= size - 1)){
+                            if(board[x + i][y + j]){
+                                board[x + i][y + j] = false;
+                            } else {
+                                board[x + i][y + j] = true;
+                            }
+                        }
+                    }
+                }
+                
+                if(boardsEqual()){
+                    document.getElementById("popUpText").style.display = "block";
+                    document.getElementById("popUpText").innerText = "MATCH!";
+                    setTimeout(
+                        function(){
+                            level = level + 1;
+                            pickNewBoard();
+                            document.getElementById("popUpText").style.display = "none";
+                        }, 1000
+                    )
+                }
+            } else {
+                for(let i = -1; i < 2; i++){
+                    for(let j = -1; j < 2; j++){
+                        if((x + i >= 0 && x + i <= size - 1) && (y + j >= 0 && y + j <= size - 1)){
+                            if(board[x + i][y + j]){
+                                board[x + i][y + j] = false;
+                            } else {
+                                board[x + i][y + j] = true;
+                            }
+                        }
+                    }
+                }
+            }
+            render();
+        }
+
+        document.getElementById("gamePlayBoard").onmousedown = function(e){
+            let x = e.pageX - ((window.innerWidth/2) - 350);
+            let y = e.pageY - ((window.innerHeight/2) - 150);
+            let xTile = Math.floor(x / (300 / size));
+            let yTile = Math.floor(y / (300 / size));
+
+            clickTile(xTile, yTile, board, true);
+        }
+
+        document.getElementById("gamePlayBoard").onmousemove = function(e){
+            let x = e.pageX - ((window.innerWidth/2) - 350);
+            let y = e.pageY - ((window.innerHeight/2) - 150);
+            highLightX = Math.floor(x / (300 / size));
+            highLightY = Math.floor(y / (300 / size));
+            render();
+            renderHighlight();
+        }
+
+        document.getElementById("gamePlayBoard").onmouseout = function(e){
+            highLightX = -1;
+            highLightY = -1;
+            render();
+        }
+
+        function lose(){
+            document.getElementById("mainMenu").style.display = "block";
+            document.getElementById("game").style.display = "none";
+            saveHighScore();
+            document.getElementById("highScore").innerText = highScore;
+            level = 1;
+            lives = 10;
+            turns = 1;
+        }
+
+        function getRandomColor(){
+            return '#' + Math.floor(Math.random() * (0xffffff + 1)).toString(16).padStart(6, '0');
+        }
+
+        function reset(){
+            color1 = getRandomColor();
+            color2 = getRandomColor();
+
+            if(level == 1){
+                turns = 1;
+            } else if(level == 2){
+                turns = 1;
+            } else if(level == 3){
+                turns = 2;
+            } else if(level == 4){
+                turns = 2;
+            } else if(level == 5){
+                turns = 1;
+            } else if(level == 6){
+                turns = 1;
+            } else if(level == 7){
+                turns = 2;
+            } else if(level == 8){
+                turns = 2;
+            } else if(level == 9){
+                turns = 1;
+            } else if(level == 10){
+                turns = 1;
+            } else if(level == 11){
+                turns = 2;
+            } else if(level == 12){
+                turns = 2;
+            } else if(level == 13){
+                turns = 3;
+            } else if(level == 14){
+                turns = 3;
+            } else if(level == 15){
+                turns = 1;
+            } else if(level == 16){
+                turns = 2;
+            } else if(level == 17){
+                turns = 3;
+            } else if(level == 18){
+                turns = 4;
+            } else if(level == 19){
+                turns = 5;
+            } else if(level == 20){
+                turns = 6;
+            }
+
+            document.getElementById("turns").innerText = turns;
+
+            for(let x = 0; x < size; x++){
+                for(let y = 0; y < size; y++){
+                    board[x][y] = startBoard[x][y];
+                }  
+            }  
+
+            render();
+        }
+
+    </script>
+</html>
